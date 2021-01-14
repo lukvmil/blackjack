@@ -7,10 +7,17 @@
             border: thin solid black;
             border-radius: 16px;
             height: 150px;
-            width: 90px;
+            width: 120px;
             margin-bottom: 16px;
+            margin-top: 16px;
             display: grid;
             align-items: center;
+            justify-items: center;
+        }
+
+        .card-area {
+            display: grid;
+            grid-template-columns: 150px 150px;
             justify-items: center;
         }
     </style>
@@ -19,17 +26,18 @@
 <body>
     <div class="game-area">
         <div class="character"></div>
-        <div class="title">Dealer</div>
+        <div class="title">Dealer: <span id="dealer-score" class="score"></span></div>
         <div class="card-area">
             <div id="dealer-0" class="card"></div>
             <div id="dealer-1" class="card"></div>
         </div>
         <div class="character">
-            <div class="title">Player</div>
+            <div class="title">Player: <span id="player-score" class="score"></span></div>
             <div class="card-area">
                 <div id="player-0" class="card"></div>
                 <div id="player-1" class="card"></div>
             </div>
+
         </div>
     </div>
 </body>
@@ -46,8 +54,8 @@
         dealerCards = get2Cards(deck);
 
         displayCards();
+        setScore();
         setTimeout(declareWinner, 2000);
-
 
     }
 
@@ -72,18 +80,18 @@
     }
 
     var shuffle = (deck) => {
+        var randomizer = (card1, card2) => {
+            let rand = Math.random();
+
+            if (rand > .5) {
+                return 1;
+            } else {
+                return -1;
+            }
+        }
         deck.sort(randomizer);
     }
 
-    var randomizer = (card1, card2) => {
-        let rand = Math.random();
-
-        if (rand > .5) {
-            return 1;
-        } else {
-            return -1;
-        }
-    }
 
     var get2Cards = (deck) => {
         let card1 = deck.shift();
@@ -93,16 +101,60 @@
     }
 
     var displayCards = () => {
-        document.getElementById("dealer-0").innerHTML = dealerCards[0].value + " of " + dealerCards[0].suit;
-        document.getElementById("dealer-1").innerHTML = dealerCards[1].value + " of " + dealerCards[1].suit;
-        document.getElementById("player-0").innerHTML = playerCards[0].value + " of " + playerCards[0].suit;
-        document.getElementById("player-1").innerHTML = playerCards[1].value + " of " + playerCards[1].suit;
+        // function to display face cards not as number
+        var getName = (card) => {
+            let v = card.value;
+            if (v == 11) {
+                return "jack";
+            } else if (v == 12) {
+                return "queen";
+            } else if (v == 13) {
+                return "king";
+            } else {
+                return v;
+            }
+        }
+        document.getElementById("dealer-0").innerHTML = getName(dealerCards[0]) + " of " + dealerCards[0].suit;
+        document.getElementById("dealer-1").innerHTML = getName(dealerCards[1]) + " of " + dealerCards[1].suit;
+        document.getElementById("player-0").innerHTML = getName(playerCards[0]) + " of " + playerCards[0].suit;
+        document.getElementById("player-1").innerHTML = getName(playerCards[1]) + " of " + playerCards[1].suit;
 
     }
 
+    var countCards = (cards) => {
+        let total = 0;
+        let num_aces = 0;
+        // adding up cards (face cards worth 10, aces held to determine later)
+        cards.forEach((card) => {
+            if (card.value == 1) {
+                num_aces += 1;
+            } else if (card.value == 11 || card.value == 12 || card.value == 13) {
+                total += 10;
+            } else {
+                total += card.value;
+            }
+        })
+        // aces can be 1 or 11, so this gives them the highest value that doesn't bring total over 21
+        if (num_aces > 0) {
+            let one11 = 11 + (num_aces - 1);
+            if ((total + one11) > 21) {
+                total += num_aces;
+            } else {
+                total += one11;
+            }
+        }
+
+        return total;
+    }
+
+    var setScore = () => {
+        document.getElementById("dealer-score").innerHTML = countCards(dealerCards);
+        document.getElementById("player-score").innerHTML = countCards(playerCards);
+    }
+
     var declareWinner = () => {
-        let dealerTotal = dealerCards[0].value + dealerCards[1].value;
-        let playerTotal = playerCards[0].value + playerCards[1].value;
+        let dealerTotal = countCards(dealerCards);
+        let playerTotal = countCards(playerCards);
         let message;
 
         if (playerTotal > dealerTotal) {
@@ -121,8 +173,6 @@
 
 
     startGame();
-
-    console.log(playerCards, dealerCards);
 
 
 </script>
